@@ -1,0 +1,137 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                String        @id @default(cuid())
+  name              String
+  contractValue     Float         @default(0)
+  budgetAlat        Float         @default(0)
+  budgetGaji        Float         @default(0)
+  budgetTransport   Float         @default(0)
+  budgetMaterial    Float         @default(0)
+  status            String        @default("berjalan")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  transactions      Transaction[]
+
+  @@map("projects")
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  date        String
+  description String
+  debit       Float     @default(0)
+  kredit      Float     @default(0)
+  balance     Float     @default(0)
+  category    String    @default("unclassified")
+  projectId   String?
+  debtId      String?
+  sequence    Int       @default(0)
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  debt        Debt?     @relation(fields: [debtId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("transactions")
+}
+
+model Debt {
+  id           String        @id @default(cuid())
+  vendor       String
+  description  String
+  initialAmount Float        @default(0)
+  manualPaid   Float         @default(0)
+  type         DebtType
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@map("debts")
+}
+
+model Employee {
+  id        String         @id @default(cuid())
+  name      String
+  position  String         @default("")
+  salary    Float          @default(0)
+  status    EmployeeStatus @default(LUNAS)
+  month     Int            @default(5)
+  year      Int            @default(2026)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("employees")
+}
+
+model Asset {
+  id                   String   @id @default(cuid())
+  name                 String
+  acquisitionCost      Float    @default(0)
+  usefulLifeYears      Int      @default(5)
+  monthlyDepreciation  Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("assets")
+}
+
+model Receipt {
+  id            String   @id @default(cuid())
+  receiptNumber String
+  date          String
+  partyName     String
+  amount        Float    @default(0)
+  description   String   @default("")
+  createdAt     DateTime @default(now())
+
+  @@map("receipts")
+}
+
+enum DebtType {
+  HUTANG
+  PIUTANG
+}
+
+enum EmployeeStatus {
+  LUNAS
+  BELUM_LUNAS
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  password    String
+  name        String?
+  email       String?
+  roleName    String   @default("Staff")
+  permissions Json     // Stores menu access permissions: { "dashboard": "write", "projects": "read", etc. }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
+
+model PeriodLock {
+  id        String   @id @default(cuid())
+  year      Int
+  month     Int
+  isLocked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([year, month])
+  @@map("period_locks")
+}
+
+

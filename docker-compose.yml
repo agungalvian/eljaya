@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ejp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ejp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ejp_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ejp_finance}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5434:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-ejp_user} -d ${POSTGRES_DB:-ejp_finance}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    container_name: ejp_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ejp_user}:${POSTGRES_PASSWORD:-ejp_secret}@postgres:5432/${POSTGRES_DB:-ejp_finance}
+      CORS_ORIGIN: http://localhost:5151
+      JWT_SECRET: ${JWT_SECRET:-ejp_super_secret_jwt_key_2026}
+      JWT_EXPIRES_IN: 24h
+    ports:
+      - '3010:3001'
+    volumes:
+      - ./backend:/app/backend
+      - /app/backend/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        npx prisma generate &&
+        npx prisma migrate deploy &&
+        npx prisma db seed &&
+        node src/server.js
+      "
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    container_name: ejp_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3010
+    ports:
+      - '5151:5173'
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

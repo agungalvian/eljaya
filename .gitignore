@@ -1,0 +1,14 @@
+node_modules/
+.env
+dist/
+.DS_Store
+*.log
+.prisma/
+
+frontend/node_modules/
+frontend/dist/
+
+backend/node_modules/
+backend/.env
+
+postgres_data/

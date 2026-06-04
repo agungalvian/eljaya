@@ -96,7 +96,7 @@ export default function Dashboard() {
                 CV. EL JAYA PONDASI
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight">
-                Laporan Keuangan <span className="text-amber-400">Realtime</span>
+                Laporan Keuangan <span className="text-amber-400">Terpadu</span>
               </h2>
               <p className="text-slate-300 mt-2 text-sm sm:text-base max-w-xl">
                 Jasa Konstruksi & Rental Alat Berat · Badung, Bali
